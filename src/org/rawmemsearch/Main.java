@@ -6,15 +6,17 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        SlightlySmarterSearch slightlySmarterSearch = new SlightlySmarterSearch(files());
-        for (SearchDocument searchDocument: slightlySmarterSearch.search("", 10)) {
+        String path = args.length > 0 ? args[0] : "/home/corrupt/Desktop/books";
+        String query = args.length > 1 ? args[1] : "whenever";
+        SlightlySmarterSearch slightlySmarterSearch = new SlightlySmarterSearch(files(path));
+        for (SearchDocument searchDocument: slightlySmarterSearch.search(query, 10)) {
             System.out.println(searchDocument.getTitle() + " " + searchDocument.getScore());
         }
 
     }
 
-    private static List<File> files() {
-        File directory = new File("/home/corrupt/Desktop/books");
+    private static List<File> files(String path) {
+        File directory = new File(path);
         if (directory.isDirectory()) {
             File[] files = directory.listFiles();
             if (files == null) {

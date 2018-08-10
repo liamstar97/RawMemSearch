@@ -1,5 +1,7 @@
 package org.rawmemsearch;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class DumbSearchEngine implements Searcher, Indexer{
@@ -7,10 +9,10 @@ public class DumbSearchEngine implements Searcher, Indexer{
     private List<SearchDocument> dumbSearchDocuments;
 
     public DumbSearchEngine(List<String> searchStrings) {
+        dumbSearchDocuments = new ArrayList<>();
         for (String string: searchStrings) {
-            string.toLowerCase();
-            String[] splitString = new String[2];
-            splitString = string.split(":");
+            string = string.toLowerCase();
+            String[] splitString = string.split(":");
             indexDoc(new SearchDocument(splitString[0], splitString[0], splitString[1]));
         }
     }
@@ -22,6 +24,7 @@ public class DumbSearchEngine implements Searcher, Indexer{
 
     @Override
     public List<SearchDocument> search(String query, int numResults) {
+        List<SearchDocument> rankedResults = new ArrayList<>();
         for (SearchDocument document : dumbSearchDocuments) {
             if (document.getContents().contains(query)) {
                 String[] splitString = document.getContents().split(" ");
@@ -32,9 +35,14 @@ public class DumbSearchEngine implements Searcher, Indexer{
                     }
                 }
                 document.setScore(score);
+                rankedResults.add(document);
             }
         }
-        return 
+        rankedResults.sort(Comparator.comparingDouble(SearchDocument::getScore).reversed());
+        if (rankedResults.size() > numResults) {
+            rankedResults.subList(0, numResults);
+        }
+        return rankedResults;
     }
 
 

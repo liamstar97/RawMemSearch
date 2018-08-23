@@ -1,0 +1,8 @@
+org/rawmemsearch/TermDocument.class
+org/rawmemsearch/Indexer.class
+org/rawmemsearch/SlightlySmarterSearch.class
+org/rawmemsearch/QueryDocument.class
+org/rawmemsearch/SearchDocument.class
+org/rawmemsearch/Main.class
+org/rawmemsearch/DumbSearchEngine.class
+org/rawmemsearch/Searcher.class

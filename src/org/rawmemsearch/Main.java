@@ -15,6 +15,10 @@ public class Main {
 
     }
 
+    private static List<File> files(String path) {
+        return files(path, -1);
+    }
+
     private static List<File> files(String path, int max) {
         File directory = new File(path);
         if (directory.isDirectory()) {

@@ -8,12 +8,31 @@ public class SlightlySmarterSearch implements Searcher, Indexer {
 
     private Map<String, List<TermDocument>> wordTable;
 
+    public static SearchDocument fromFile(File file) throws IOException {
+        String content = String.join("\n", Files.readAllLines(file.toPath()));
+        System.out.println("Creating " + file.getName() + "Search File");
+        SearchDocument document = new SearchDocument(file.getAbsolutePath(), file.getName(), content);
+        return document;
+    }
+
+    public SlightlySmarterSearch(Iterable<SearchDocument> searchDocuments) {
+        wordTable = new HashMap<>();
+        for (SearchDocument document : searchDocuments) {
+            System.out.println("Indexing " + document.getDocId());
+            indexDoc(document);
+        }
+        System.out.println("Sorting key lists");
+        Iterator<Map.Entry<String, List<TermDocument>>> iterator = wordTable.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, List<TermDocument>> docList = iterator.next();
+            docList.getValue().sort(Comparator.comparingInt(TermDocument::getRanking).reversed());
+        }
+    }
+
     public SlightlySmarterSearch(List<File> searchFiles) throws IOException {
         wordTable = new HashMap<>();
             for (File file: searchFiles) {
-                String content = String.join("\n", Files.readAllLines(file.toPath()));
-                System.out.println("Creating " + file.getName() + "Search File");
-                SearchDocument document = new SearchDocument(file.getAbsolutePath(), file.getName(), content);
+                SearchDocument document = fromFile(file);
                 System.out.println("Indexing " + document.getDocId());
                 indexDoc(document);
             }

@@ -6,13 +6,8 @@ public class DumbSearchEngine implements Searcher, Indexer{
 
     private List<SearchDocument> dumbSearchDocuments;
 
-    public DumbSearchEngine(List<String> searchStrings) {
-        dumbSearchDocuments = new ArrayList<>();
-        for (String string: searchStrings) {
-            string = string.toLowerCase();
-            String[] splitString = string.split(":");
-            indexDoc(new SearchDocument(splitString[0], splitString[0], splitString[1]));
-        }
+    public DumbSearchEngine(List<SearchDocument> searchDocuments) {
+        dumbSearchDocuments = searchDocuments;
     }
 
     @Override

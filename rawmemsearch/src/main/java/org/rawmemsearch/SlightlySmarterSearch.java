@@ -3,16 +3,24 @@ package org.rawmemsearch;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.logging.*;
+import java.util.stream.Collectors;
 
 public class SlightlySmarterSearch implements Searcher, Indexer {
 
-    private Map<String, List<TermDocument>> wordTable;
+    private static final Logger LOGGER = Logger.getLogger(SlightlySmarterSearch.class.getName());
 
-    public static SearchDocument fromFile(File file) throws IOException {
-        String content = String.join("\n", Files.readAllLines(file.toPath()));
-        System.out.println("Creating " + file.getName() + "Search File");
-        SearchDocument document = new SearchDocument(file.getAbsolutePath(), file.getName(), content);
-        return document;
+    Map<String, List<TermDocument>> wordTable;
+
+    public static SearchDocument fromFile(File file) {
+        try {
+            String content = String.join("\n", Files.readAllLines(file.toPath()));
+            System.out.println("Creating " + file.getName() + "Search File");
+            SearchDocument document = new SearchDocument(file.getAbsolutePath(), file.getName(), content);
+            return document;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public SlightlySmarterSearch(Iterable<SearchDocument> searchDocuments) {
@@ -21,27 +29,16 @@ public class SlightlySmarterSearch implements Searcher, Indexer {
             System.out.println("Indexing " + document.getDocId());
             indexDoc(document);
         }
-        System.out.println("Sorting key lists");
+        LOGGER.info("Sorting key lists");
         Iterator<Map.Entry<String, List<TermDocument>>> iterator = wordTable.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, List<TermDocument>> docList = iterator.next();
-            docList.getValue().sort(Comparator.comparingInt(TermDocument::getRanking).reversed());
+            docList.getValue().sort(Comparator.comparingDouble(TermDocument::getRanking).reversed());
         }
     }
 
-    public SlightlySmarterSearch(List<File> searchFiles) throws IOException {
-        wordTable = new HashMap<>();
-            for (File file: searchFiles) {
-                SearchDocument document = fromFile(file);
-                System.out.println("Indexing " + document.getDocId());
-                indexDoc(document);
-            }
-            System.out.println("Sorting key lists");
-            Iterator<Map.Entry<String, List<TermDocument>>> iterator = wordTable.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, List<TermDocument>> docList = iterator.next();
-                docList.getValue().sort(Comparator.comparingInt(TermDocument::getRanking).reversed());
-            }
+    public SlightlySmarterSearch(List<File> searchFiles) {
+        this(searchFiles.stream().map(SlightlySmarterSearch::fromFile).collect(Collectors.toList()));
     }
 
     @Override
@@ -52,12 +49,12 @@ public class SlightlySmarterSearch implements Searcher, Indexer {
             TermDocument termDocument = new TermDocument(term, 1, searchDocument);
             if (wordTable.containsKey(term)) {
                 if (wordTable.get(term).stream().map(TermDocument::getDocument).noneMatch(searchDocument::equals)) {
-                    System.out.println("Adding term document");
+                    LOGGER.finer("Adding term document");
                     wordTable.get(term).add(termDocument);
                 } else {
                     System.out.println("Setting term document ranking");
                     for (TermDocument termDocuments : wordTable.get(term)) {
-                        if (termDocuments.getTerm().equals(term)) {
+                        if (termDocuments.getDocument().getDocId().equals(searchDocument.getDocId())) {
                             termDocuments.setRanking(termDocuments.getRanking() + 1);
                         }
                     }
@@ -77,18 +74,14 @@ public class SlightlySmarterSearch implements Searcher, Indexer {
     }
 
     @Override
-    public List<SearchDocument> search(String query, int numResults) {
-        if (wordTable.containsKey(query)) {
-            System.out.println("collecting results");
-            List<SearchDocument> results = new ArrayList<>();
-            for (TermDocument termDocument: wordTable.get(query)) {
-                results.add(termDocument.getDocument());
+    public List<SearchDocument> search(QueryDocument query) {
+        if (wordTable.containsKey(query.getQuery())) {
+            System.out.printf("collecting results for the word: %s \n", query.getQuery());
+            for (TermDocument termDocument: wordTable.get(query.getQuery())) {
+                termDocument.getDocument().setScore(termDocument.getRanking());
+                query.addSearchDocument(termDocument.getDocument());
             }
-            if (numResults < results.size()) {
-                return results.subList(0, numResults);
-            } else {
-                return results;
-            }
+            return query.results();
         } else {
             System.out.println("There are no results");
             return Collections.emptyList();

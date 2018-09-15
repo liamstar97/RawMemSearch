@@ -1,13 +1,23 @@
 package org.rawmemsearch;
 
+import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class DumbSearchEngine implements Searcher, Indexer{
+public class DumbSearchEngine implements Searcher, Indexer {
 
     private List<SearchDocument> dumbSearchDocuments;
 
+    List<SearchDocument> getDumbSearchDocuments() {
+        return dumbSearchDocuments;
+    }
+
     public DumbSearchEngine(List<SearchDocument> searchDocuments) {
         dumbSearchDocuments = searchDocuments;
+    }
+
+    public DumbSearchEngine(List<File> files, int numFiles) {
+        this(files.stream().map(SlightlySmarterSearch::fromFile).collect(Collectors.toList()).subList(0, numFiles));
     }
 
     @Override
@@ -16,15 +26,15 @@ public class DumbSearchEngine implements Searcher, Indexer{
     }
 
     @Override
-    public List<SearchDocument> search(String query, int numResults) {
+    public List<SearchDocument> search(QueryDocument query) {
         List<SearchDocument> rankedResults = new ArrayList<>();
         for (SearchDocument document : dumbSearchDocuments) {
-            if (document.getContents().contains(query)) {
+            if (document.getContents().contains(query.getQuery())) {
                 String[] splitString = document.getContents().split(" ");
-                Double score = 0.0;
+                int score = 0;
                 for (String string : splitString) {
-                    if (string.contains(query)) {
-                        score += 1.0;
+                    if (string.toLowerCase().contains(query.getQuery())) {
+                        score += 1;
                     }
                 }
                 document.setScore(score);
@@ -32,8 +42,8 @@ public class DumbSearchEngine implements Searcher, Indexer{
             }
         }
         rankedResults.sort(Comparator.comparingDouble(SearchDocument::getScore).reversed());
-        if (rankedResults.size() > numResults) {
-            rankedResults.subList(0, numResults);
+        if (rankedResults.size() > query.getNumResults()) {
+            rankedResults.subList(0, query.getNumResults());
         }
         return rankedResults;
     }

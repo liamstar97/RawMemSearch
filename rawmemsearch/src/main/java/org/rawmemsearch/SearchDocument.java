@@ -4,7 +4,7 @@ public class SearchDocument {
     private String docId;
     private String title;
     private String contents;
-    private Double score;
+    private int score;
 
     public SearchDocument(String docId, String title, String contents) {
         this.docId = docId;
@@ -12,11 +12,11 @@ public class SearchDocument {
         this.contents = contents;
     }
 
-    public Double getScore() {
+    public int getScore() {
         return score;
     }
 
-    public void setScore(Double score) {
+    public void setScore(int score) {
         this.score = score;
     }
 
